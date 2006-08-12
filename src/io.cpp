@@ -583,7 +583,7 @@ bool Context::read_eval_print
         fflush (out);
     }
 
-    while (expr = read (sio))
+    while ((expr = read (sio)))
 	{
 	// Don't bother printing the unspecified value as result.
 
