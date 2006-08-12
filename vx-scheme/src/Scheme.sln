@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vxs-interp", "win32\vxs-interp\vxs-interp.vcproj", "{FAB1057D-6292-457F-8509-34F3879528BB}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vxs-bootstrap", "win32\vxs-bootstrap\vxs-bootstrap.vcproj", "{04F48FCA-DCE6-484B-B6BA-C3F63BFEBD6C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vx-scheme", "win32\vx-scheme\vx-scheme.vcproj", "{F6385AAC-CBC3-4795-9C0C-2CA79D627E90}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{FAB1057D-6292-457F-8509-34F3879528BB}.Debug.ActiveCfg = Debug|Win32
+		{FAB1057D-6292-457F-8509-34F3879528BB}.Debug.Build.0 = Debug|Win32
+		{FAB1057D-6292-457F-8509-34F3879528BB}.Release.ActiveCfg = Release|Win32
+		{FAB1057D-6292-457F-8509-34F3879528BB}.Release.Build.0 = Release|Win32
+		{04F48FCA-DCE6-484B-B6BA-C3F63BFEBD6C}.Debug.ActiveCfg = Debug|Win32
+		{04F48FCA-DCE6-484B-B6BA-C3F63BFEBD6C}.Debug.Build.0 = Debug|Win32
+		{04F48FCA-DCE6-484B-B6BA-C3F63BFEBD6C}.Release.ActiveCfg = Release|Win32
+		{04F48FCA-DCE6-484B-B6BA-C3F63BFEBD6C}.Release.Build.0 = Release|Win32
+		{F6385AAC-CBC3-4795-9C0C-2CA79D627E90}.Debug.ActiveCfg = Debug|Win32
+		{F6385AAC-CBC3-4795-9C0C-2CA79D627E90}.Debug.Build.0 = Debug|Win32
+		{F6385AAC-CBC3-4795-9C0C-2CA79D627E90}.Release.ActiveCfg = Release|Win32
+		{F6385AAC-CBC3-4795-9C0C-2CA79D627E90}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
