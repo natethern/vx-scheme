@@ -92,14 +92,14 @@ TESTARENA = 	SLABSIZE=1000000
 
 test-interp:	vxs-interp
 		@echo '========== TESTING INTERPRETER =========='
-		@if [ -d /usr/share/guile/slib ]; then \
+		@if [ -d /usr/share/slib ]; then \
 		    (cd ../lib; ../src/vxs-interp < vx-slib-test.scm); \
 		fi
 		@(cd ../testcases; $(TESTARENA) ../src/vxs-interp < vx-test.scm)
 
 test-compile:	vx-scheme
 		@echo '========== TESTING COMPILER =========='
-		@if [ -d /usr/share/guile/slib ]; then \
+		@if [ -d /usr/share/slib ]; then \
 		    (cd ../lib; ../src/vx-scheme < vx-slib-test.scm); \
 		fi
 		@(cd ../testcases; $(TESTARENA) ../src/vx-scheme < vx-test.scm)

@@ -292,8 +292,32 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       if (!insn->flag(Cell::QUICK)) { 
         Cell* subr = find_var(root_envt, insn->cd.y, 0);
         if (!subr) error("missing primitive procedure");
-        insn->cd.f = cdr(subr)->SubrValue();
-        insn->flag(Cell::QUICK, true);
+	Cell* proc = cdr(subr);
+	type = proc->type();
+	if (type == Cell::Cproc) { 
+          // Yuck.  When the current procedure was compiled, the
+          // routine we are about to invoke was a builtin (subr): now
+          // it's a compiled procedure.  The optimized calling
+          // convention for subrs no longer applies.  We must pop 
+          // the args off the stack, then push a continuation, then 
+          // re-push the args, and dispatch to the procedure.
+          n_args = INSN_COUNT(insn);
+          cellvector cv;
+          for (int ix = 0; ix < n_args; ++ix) 
+            cv.push(m_stack.pop());
+          save(r_envt);
+          save(r_cproc);
+          save(pc+1);
+          for (int ix = 0; ix < n_args; ++ix)
+            m_stack.push(cv.pop());
+          r_cproc = proc;
+          goto PROC;
+	} else if (type == Cell::Subr) {
+          insn->cd.f = cdr(subr)->SubrValue();
+          insn->flag(Cell::QUICK, true);
+	} else {
+          error("subr invoked on non-procedure");
+	}
       }
       r_val = pop_list (INSN_COUNT (insn));
       // Subr's can change anything (in particular they can reenter execute).

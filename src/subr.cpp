@@ -933,7 +933,7 @@ Cell* nconc(Context* ctx, Cell* arglist) {
 
   if (arglist == nil) return nil;
 
-  while(cdr(arglist) != nil) {
+  while (cdr(arglist) != nil) {
     Cell* list_head = car(arglist);
     if (list_head != nil) {
       Cell* list_tail = list_head;
