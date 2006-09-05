@@ -390,11 +390,15 @@ cellvector * Cell::CProcValue () const
     typecheck(Cproc); return cd.cv;
     }
 
-Cell * Cell::PromiseValue () const
-    {
-    typecheck (Promise);
-    return cd.cv->get (0);
-    }
+Cell* Cell::PromiseValue () const {
+  typecheck (Promise);
+  return cd.cv->get (0);
+}
+
+Cell* Cell::CPromiseValue() const {
+  typecheck(Cpromise);
+  return cd.cv->get(0);
+}
 
 psymbol Cell::BuiltinValue () const
     {

@@ -415,39 +415,39 @@ public:
     // preallocate the string space; freeing this object discards
     // both box and string.
 
-    struct StringBox
-        {
-        size_t length;
-        char   s[1];
-        };
+    struct StringBox {
+      size_t length;
+      char s[1];
+    };
 
     // Value extractors
 
-    int          IntValue ()     const;
-    char         CharValue ()    const;
-    SubrBox *    SubrValue ()    const;
-    char *       StringValue ()  const;
-    size_t       StringLength () const;                 
-    FILE *       IportValue ()   const;
-    FILE *       OportValue ()   const;
-    void *       ContValue ()    const;
-    cellvector * VectorValue ()  const;
-    cellvector * CProcValue ()   const;
-    Cell *       PromiseValue () const;
-    psymbol      SymbolValue ()  const;
-    psymbol      BuiltinValue () const;
-    Procedure    LambdaValue ()  const;
-    double       RealValue ()    const;
-    const char * name ()         const;
+    int IntValue() const;
+    char CharValue() const;
+    SubrBox* SubrValue() const;
+    char* StringValue() const;
+    size_t StringLength() const;                 
+    FILE* IportValue() const;
+    FILE* OportValue() const;
+    void* ContValue() const;
+    cellvector* VectorValue() const;
+    cellvector* CProcValue() const;
+    Cell* PromiseValue() const;
+    Cell* CPromiseValue() const;
+    psymbol SymbolValue() const;
+    psymbol BuiltinValue() const;
+    Procedure LambdaValue() const;
+    double RealValue() const;
+    const char* name() const;
 
     // unsafe accessors: use when you have prior knowledge that the 
     // cell contains an atom of the proper type.
 
-    cellvector * unsafe_vector_value() const { 
+    cellvector* unsafe_vector_value() const { 
       return cd.cv;
     }
 
-    static void         real_to_string (double, char *, int);
+    static void real_to_string (double, char *, int);
 
     double asReal () const { 
       if (type () == Cell::Int)

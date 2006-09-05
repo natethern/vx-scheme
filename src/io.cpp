@@ -535,9 +535,10 @@ void Cell::write (sstring& ss) const {
         ss.append("#<compiled-procedure>");
         break;
       case Cpromise:
-        ss.append(flag(FORCED)
-                  ? "#<forced-compiled-promise>"
-                  : "#<compiled-promise>");
+        if (flag(FORCED))
+	  CPromiseValue()->write(ss);
+	else
+	  ss.append("#<compiled-promise>");
         break;
       case Insn:
         ss.append("#<vm-instruction>");

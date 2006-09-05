@@ -290,7 +290,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       break;
     case 2: // subr
       if (!insn->flag(Cell::QUICK)) { 
-        Cell* subr = find_var(root_envt, insn->cd.y, 0);
+        Cell* const subr = find_var(root_envt, insn->cd.y, 0);
         if (!subr) error("missing primitive procedure");
 	Cell* proc = cdr(subr);
 	type = proc->type();
@@ -303,12 +303,12 @@ Cell* Context::execute (Cell* proc, Cell* args) {
           // re-push the args, and dispatch to the procedure.
           n_args = INSN_COUNT(insn);
           cellvector cv;
-          for (int ix = 0; ix < n_args; ++ix) 
+          for (unsigned int ix = 0; ix < n_args; ++ix) 
             cv.push(m_stack.pop());
           save(r_envt);
           save(r_cproc);
           save(pc+1);
-          for (int ix = 0; ix < n_args; ++ix)
+          for (unsigned int ix = 0; ix < n_args; ++ix)
             m_stack.push(cv.pop());
           r_cproc = proc;
           goto PROC;
