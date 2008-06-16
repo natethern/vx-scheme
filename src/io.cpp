@@ -254,7 +254,7 @@ TOP:
 	    error ("indecipherable #o constant");
 	    }
 
-        error ("indecipherable #constant");
+        error ("indecipherable #constant:", lexeme.str());
 	}
     else if (c == '"')
 	{

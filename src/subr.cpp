@@ -1570,21 +1570,19 @@ static Cell* put_property (Context * ctx, Cell * arglist)
     return unspecified;
     }
 
-static Cell* get_property (Context * ctx, Cell * arglist) 
-    {
-    psymbol p = car (arglist)->SymbolValue ();
-    psymbol q = cadr (arglist)->SymbolValue ();
+static Cell* get_property (Context * ctx, Cell * arglist) {
+  psymbol const p = car (arglist)->SymbolValue ();
+  psymbol const q = cadr (arglist)->SymbolValue ();
 
-    if (p->plist)
-	for (int ix = 0; ix < p->plist->size (); ++ix) 
-	    {
-	    Cell * elt = p->plist->get (ix);
-	    if (car (elt)->SymbolValue () == q)
-		return cdr (elt);
-	    }
-
-    return ctx->make_boolean (false);
+  if (p->plist)
+    for (int ix = 0; ix < p->plist->size (); ++ix) {
+      Cell * elt = p->plist->get (ix);
+      if (car (elt)->SymbolValue () == q)
+	return cdr (elt);
     }
+
+  return ctx->make_boolean (false);
+}
 
 // Imported from Common Lisp.  Returns #t if the given symbol is 
 // bound in the global environment (lexical bindings are not consulted), 
@@ -1868,11 +1866,10 @@ void Context::provision ()
     SchemeExtension::RunInstall (this, envt);
     }
 
-void Context::bind_subr (const char * name, subr_f subr)
-    {
-    psymbol s = intern (name);
-    set_var (envt, s, make_subr (subr, name));
-    }
+void Context::bind_subr (const char * name, subr_f subr) {
+  psymbol s = intern (name);
+  set_var (envt, s, make_subr (subr, name));
+}
 
 cellvector* SchemeExtension::extensions = 0;
 SchemeExtension* SchemeExtension::main = 0;
