@@ -11,7 +11,7 @@ VM_COMP_OBJ     = $(VM_OBJ) _compiler.o
 UNIX_OBJ        = u-main.o
 PROGRAM		= vx-scheme
 DEFVER          = -DVERSION=$(VERSION)
-CFLAGS		= -ansi -g -O2 -fno-exceptions -fno-rtti -Wall $(DEFVER)
+CFLAGS		= -m64 -ansi -g -O2 -fno-exceptions -fno-rtti -Wall $(DEFVER)
 CC		= gcc	
 TC              = ../testcases
 
@@ -37,7 +37,7 @@ scheme-compiler: $(VM_COMP_OBJ) $(UNIX_OBJ) compile-file.scm vx-scheme
 		./vx-scheme ./compile-file.scm < compile-file.scm \
 		  > _compile-file.cpp
 		$(CC) $(CFLAGS) -c _compile-file.cpp
-		$(CC) -o $@ $(VM_COMP_OBJ) $(UNIX_OBJ) \
+		$(CC) $(CFLAGS) -o $@ $(VM_COMP_OBJ) $(UNIX_OBJ) \
 		  _compile-file.o -lstdc++ -lm 
 
 # Precompiled objects!  Run the scheme-compiler to produce bytecode in

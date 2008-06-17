@@ -51,7 +51,7 @@ static bool exact_list (Cell * arglist)
 	    {
 	    case Cell::Int:   continue;
             case Cell::Real:  return false;
-	    default:          error ("non-numeric type encountered");
+	    default:          return false;
 	    }
 
     return true;
@@ -78,7 +78,7 @@ Cell * skplus (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	int result = 0;
+	intptr_t result = 0;
 
 	FOR_EACH (p, arglist)
 	    result += car (p)->IntValue ();
@@ -100,7 +100,7 @@ Cell * skminus (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	int result = car (arglist)->IntValue ();
+	intptr_t result = car (arglist)->IntValue ();
 	arglist = cdr (arglist);
 
 	if (arglist == nil)
@@ -154,7 +154,7 @@ Cell * times (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	int result = 1;
+	intptr_t result = 1;
 
 	FOR_EACH (p, arglist)
 	    result *= Cell::car (p)->IntValue ();
@@ -176,8 +176,8 @@ Cell * skmax (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	int         m = INT_MIN;
-	int         z;
+	intptr_t    m = numeric_limits<intptr_t>::min();
+	intptr_t    z;
 
 	FOR_EACH (a, arglist)
 	    if ((z = Cell::car (a)->IntValue ()) > m)
@@ -202,8 +202,8 @@ Cell * skmin (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	int         m = INT_MAX;
-	int         z;
+	intptr_t m = numeric_limits<intptr_t>::max();
+	intptr_t z;
 
 	FOR_EACH (a, arglist)
 	    if ((z = car (a)->IntValue ()) < m)
@@ -323,8 +323,8 @@ BINOP (char_gt_ci,   chrGTci, char,   Char)
 	    if (cdr (a) != nil)                         	\
                 if (exact)                               	\
 	            { 		 			 	\
-                    int ia = car (a)->IntValue ();       	\
-                    int ib = cadr (a)->IntValue ();      	\
+                    intptr_t ia = car (a)->IntValue ();       	\
+                    intptr_t ib = cadr (a)->IntValue ();      	\
 	            if (! OP (ia, ib))			 	\
 			return &Cell::Bool_F;                   \
                     }                                           \
@@ -435,7 +435,7 @@ Cell * write_char (Context * ctx, Cell * arglist)
 
 Cell * skmake_vector (Context * ctx, Cell * arglist)
     {
-    int n = car (arglist)->IntValue ();
+    intptr_t n = car (arglist)->IntValue ();
 
     if (cdr (arglist) != nil)
 	return ctx->make_vector (n, cadr (arglist));
@@ -1183,7 +1183,7 @@ Cell * set_cdr (Context * ctx, Cell * arglist)
     return unspecified;
     }
 
-Cell * set_car (Context * ctx, Cell * arglist)
+Cell* set_car(Context * ctx, Cell * arglist)
     {
     Cell::setcar (car (arglist), cadr (arglist));
     return unspecified;
@@ -1218,7 +1218,7 @@ Cell * integer_to_char (Context * ctx, Cell * arglist)
 
 Cell * char_to_integer (Context * ctx, Cell * arglist)
     {
-    return ctx->make_int ((int) car (arglist)->CharValue ());
+    return ctx->make_int (static_cast<intptr_t>(car (arglist)->CharValue ()));
     }
 
 Cell * open_input_file (Context * ctx, Cell * arglist)
@@ -1290,7 +1290,7 @@ Cell * inexact_to_exact (Context * ctx, Cell * arglist)
     if (a->type () == Cell::Int)
 	return ctx->make_int (a->IntValue ());
     else
-	return ctx->make_int ((int) a->RealValue ());
+	return ctx->make_int (static_cast<intptr_t>(a->RealValue ()));
     }
 
 // Round to nearest int... which would be easy except that the Scheme

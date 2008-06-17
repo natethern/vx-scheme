@@ -233,7 +233,7 @@ TOP:
 	    // hex constant.  Drop the 'x' and convert with strtoul.
 
 	    char * endptr;
-	    unsigned long ul = strtoul (lexeme.str () + 1, &endptr, 16);
+	    uintptr_t ul = strtoul (lexeme.str () + 1, &endptr, 16);
 	    
 	    if (*endptr == '\0')
 		READ_RETURN (make_int (ul));
@@ -425,7 +425,7 @@ void Cell::write (sstring& ss) const {
     switch(t) { 
       case Int: { 
         char buf[40];
-        sprintf(buf, "%d", IntValue());
+        sprintf(buf, "%" PRIdPTR, IntValue());
         ss.append(buf);
         break;
       }

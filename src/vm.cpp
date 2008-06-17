@@ -105,7 +105,7 @@ static bool exact_top_n (cellvector * cv, int n) {
     switch (cv->get_unchecked(ix)->type()) { 
       case Cell::Int:   continue;
       case Cell::Real:  return false;
-      default:          error ("non-numeric type encountered");
+      default:          return false;
     }
   return true;
 }
@@ -176,19 +176,19 @@ void Context::print_insn(int addr, Cell* insn) {
   printf ("%4d:\t%s\t", addr, op->opcode->key);
   switch (op->opnd_type) { 
     case OP_INT:
-      printf ("%d", insn->cd.i);
+      printf ("%" PRIdPTR, insn->cd.i);
       break;
     case OP_SYMBOL:
       printf ("%s", insn->cd.y->key);
       break;
-    case OP_SUBR:    printf ("%d,%s", INSN_COUNT (insn),
+    case OP_SUBR:    printf ("%" PRIdPTR ",%s", INSN_COUNT (insn),
                              insn->flag(Cell::QUICK)
                              ? insn->cd.f->name
                              : insn->cd.y->key);
       // XXX comment
       break;
     case OP_LEXADDR: 
-      printf ("%d,%d", LEXA_ESKIP(insn), LEXA_BSKIP(insn));
+      printf ("%" PRIdPTR ",%" PRIdPTR, LEXA_ESKIP(insn), LEXA_BSKIP(insn));
       break;
     case OP_NONE:
       ;
@@ -221,9 +221,9 @@ Cell* Context::vm_evaluator(Cell* form) {
 
 Cell* Context::execute (Cell* proc, Cell* args) { 
   cellvector *insns, *literals;
-  int pc;
+  intptr_t pc;
   int type;
-  int start;
+  intptr_t start;
   unsigned int count;
   unsigned int n_args = 0;
   unsigned int b_skip = 0;
@@ -232,7 +232,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
   // Note the initial stack size.
   int initial_stackdepth = m_stack.size();
   
-  save (-1);
+  save_i (-1);
 
   // Push any arguments we received onto the stack.
 
@@ -270,10 +270,10 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       printf ("\t");
       for (int ix = m_stack.size() - 1; ix >= 0; --ix) { 
         Cell * c = m_stack.get_unchecked(ix);
-        if (!(((int)c)&1)) { 
+        if (!((reinterpret_cast<intptr_t>(c))&1)) { 
           if (c == root_envt) printf("#<root-envt> ");
           else c->write (stdout);
-        } else printf ("%d", ((int)c)>>1);
+        } else printf ("%" PRIdPTR, (reinterpret_cast<intptr_t>(c))>>1);
         fputc (' ', stdout);
       }
       printf("\n");
@@ -283,14 +283,14 @@ Cell* Context::execute (Cell* proc, Cell* args) {
   switch (opcode)
     {
     case 0: // consti
-      save (insn->cd.i);
+      save_i (insn->cd.i);
       break;
     case 1: // nil
       m_stack.push (nil);
       break;
     case 2: // subr
       if (!insn->flag(Cell::QUICK)) { 
-        Cell* const subr = find_var(root_envt, insn->cd.y, 0);
+        Cell* subr = find_var(root_envt, insn->cd.y, 0);
         if (!subr) error("missing primitive procedure");
 	Cell* proc = cdr(subr);
 	type = proc->type();
@@ -307,7 +307,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
             cv.push(m_stack.pop());
           save(r_envt);
           save(r_cproc);
-          save(pc+1);
+          save_i(pc+1);
           for (unsigned int ix = 0; ix < n_args; ++ix)
             m_stack.push(cv.pop());
           r_cproc = proc;
@@ -396,7 +396,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
     case 12: // proc
       // pop the starting instruction from the stack and compose it 
       // with the current environment.
-      restore (start);
+      restore_i (start);
       m_stack.push (make_compiled_procedure (r_cproc->cd.cv->get_unchecked (0),
 					     r_cproc->cd.cv->get_unchecked (1),
 					     r_envt,
@@ -426,12 +426,12 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       // instruction slot in this segment.
       save (r_envt);
       save (r_cproc);
-      save (insn->cd.i);
+      save_i (insn->cd.i);
       break;
     case 17: // return
       r_val = m_stack.pop (); // value 
     RETURN:
-      restore (pc);
+      restore_i (pc);
       if (pc < 0)
 	goto FINISH;
       restore (r_cproc);
@@ -451,7 +451,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       // (We count from zero).  'take 0' would be a no-op; 'take 1'
       // would swap the top two elements.  We use an unchecked get
       // because we "trust the compiler."
-      int target = insn->cd.i;
+      intptr_t target = insn->cd.i;
       int last = m_stack.size() - 1;
       r_tmp = m_stack.get_unchecked(last-target);
       for (int ix = last-target; ix < last; ++ix)
@@ -541,7 +541,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       n_args = insn->cd.i;
       if (n_args != 2)
         error ("bad arguments to vector-ref!");
-      int ix = m_stack.pop()->IntValue();
+      intptr_t ix = m_stack.pop()->IntValue();
       cellvector * cv = m_stack.pop()->VectorValue();
       m_stack.push(cv->get(ix));
       break;
@@ -570,7 +570,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       n_args = insn->cd.i;
       int sz = m_stack.size ();
       if (exact_top_n (&m_stack, n_args)) { 
-        int sum = 0;
+        intptr_t sum = 0;
         for (int ix = sz - n_args; ix < sz; ++ix)
           sum += m_stack.get (ix)->IntValue(); // exact_top_n guarantees this is OK
         m_stack.discard (n_args);
@@ -589,7 +589,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       n_args = insn->cd.i;
       int sz = m_stack.size ();
       if (exact_top_n (&m_stack, n_args)) { 
-        int product = 1;
+        intptr_t product = 1;
         for (int ix = sz - n_args; ix < sz; ++ix)
           product *= m_stack.get (ix)->IntValue(); // exact_top_n says this is OK
         m_stack.discard (n_args);
@@ -606,8 +606,8 @@ Cell* Context::execute (Cell* proc, Cell* args) {
     case 35: { // quotient
       if (insn->cd.i != 2)
         error ("wrong # args");
-      int d = m_stack.pop()->IntValue();
-      int n = m_stack.pop()->IntValue();
+      intptr_t d = m_stack.pop()->IntValue();
+      intptr_t n = m_stack.pop()->IntValue();
       if (d == 0)
         error ("/0");
       m_stack.push (make_int (n/d));
@@ -616,8 +616,8 @@ Cell* Context::execute (Cell* proc, Cell* args) {
     case 36: { // remainder
       if (insn->cd.i != 2)
         error ("wrong # args");
-      int d = m_stack.pop()->IntValue();
-      int n = m_stack.pop()->IntValue();
+      intptr_t d = m_stack.pop()->IntValue();
+      intptr_t n = m_stack.pop()->IntValue();
       if (d == 0)
         error ("/0");
       m_stack.push (make_int (n%d));
@@ -633,7 +633,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
         if (n_args == 1) { 
           m_stack.push(make_int(-m_stack.pop()->IntValue()));
         } else { 
-          int difference = m_stack.get(sz-n_args)->IntValue();
+          intptr_t difference = m_stack.get(sz-n_args)->IntValue();
           for (int ix = sz - n_args + 1; ix < sz; ++ix)
             difference -= m_stack.get (ix)->IntValue();
           m_stack.discard (n_args);
@@ -687,7 +687,7 @@ Cell* Context::execute (Cell* proc, Cell* args) {
       m_stack.push(make_int(insn->cd.i));
       break;
     case 47: // promise
-      restore(start);
+      restore_i(start);
       r_tmp = make_compiled_procedure(r_cproc->cd.cv->get(0),
                                       r_cproc->cd.cv->get(1),
                                       r_envt,
@@ -895,7 +895,7 @@ Cell* Context::load_instructions(vm_cproc* cp) {
     Cell::setcar(a1, zero);
     switch(optab[opcode].opnd_type) { 
       case OP_INT:
-        Cell::setcar(a0, make_int(reinterpret_cast<int>(insn->operand)));
+        Cell::setcar(a0, make_int(reinterpret_cast<intptr_t>(insn->operand)));
         break;
       case OP_SYMBOL:
         Cell::setcar(a0,
@@ -903,7 +903,7 @@ Cell* Context::load_instructions(vm_cproc* cp) {
                        intern(static_cast<const char*>(insn->operand))));
         break;
       case OP_LEXADDR: { 
-        int la = reinterpret_cast<int>(insn->operand);
+        int la = reinterpret_cast<intptr_t>(insn->operand);
         Cell::setcar(a0, make_int(la >> 16));
         Cell::setcar(a1, make_int(la & 0xffff));
         break;
@@ -974,18 +974,18 @@ Cell* Context::write_compiled_procedure(Cell* arglist) {
       fprintf(output, "  { %2d,", opcode); // XXX magic number
       switch(op->opnd_type) { 
         case OP_NONE:    fprintf(output, "0,0");                         break;
-        case OP_INT:     fprintf(output, "0,(void*)%d", insn->cd.i);     break;
+        case OP_INT:     fprintf(output, "0,(void*)%" PRIdPTR, insn->cd.i);     break;
         case OP_SYMBOL:  fprintf(output, "0,");
                          write_escaped_string(output, insn->cd.y->key);  break;
         case OP_SUBR: 
           // XXX write a comment
-          fprintf(output, "%d,", INSN_COUNT(insn));
+          fprintf(output, "%" PRIdPTR ",", INSN_COUNT(insn));
           if (insn->flag(Cell::QUICK)) 
             write_escaped_string(output, insn->cd.f->name);
           else
             write_escaped_string(output, insn->cd.y->key);
           break;
-        case OP_LEXADDR: fprintf(output, "0,(void*)%#x", insn->cd.i);    break;
+        case OP_LEXADDR: fprintf(output, "0,(void*)%#" PRIxPTR, insn->cd.i);    break;
       }
     }
     fprintf(output, " },\n");

@@ -245,7 +245,7 @@ Cell* Context::interp_evaluator(Cell * form)
     psymbol             s;
     Cell::Type          t;
     Cell::Procedure     lambda;
-    int                 flag = 0;
+    intptr_t            flag = 0;
     double              t1;
     bool                trace;
     psymbol		p;
@@ -280,7 +280,7 @@ Cell* Context::interp_evaluator(Cell * form)
 
 #define RETURN_VALUE(v) do {      \
     r_val = (v);                  \
-    restore (r_cont);             \
+    restore_i (r_cont);             \
     GOTO (r_cont);                \
     } while (0)
     
@@ -344,7 +344,7 @@ TOP:
 	    return r_val;
 	    
 	case ev_application:
-	    save (r_cont);
+	    save_i (r_cont);
 	    r_unev = cdr (r_exp);
 	    r_exp = car (r_exp);
 	    CALL_EVAL (ev_application2);
@@ -459,7 +459,7 @@ TOP:
 
 			r_env = extend (lambda.envt);
 			bind_arguments (r_env, lambda.arglist, r_unev);
-			save (macro_subst);   // continuation
+			save_i (macro_subst);   // continuation
 			}
 		    else
 			{
@@ -489,7 +489,7 @@ TOP:
 		    error ("can't dispatch one of those.");
 		}
 	    
-	    restore (r_cont);
+	    restore_i (r_cont);
 	    GOTO (r_cont);
 
 	case ev_eval:
@@ -512,7 +512,7 @@ TOP:
 	    
             clear(r_argl);
 	    save(make_real(OS::get_time()));
-	    save(ev_time1); // cont
+	    save_i(ev_time1); // cont
 	    GOTO(apply_dispatch2);
 	    
 	case ev_time1:
@@ -530,7 +530,7 @@ TOP:
 
 	    if (cdr (r_unev) == nil)
 		{
-		restore (r_cont);
+		restore_i(r_cont);
 		EVAL_DISPATCH ();
 		}
 
@@ -557,7 +557,7 @@ TOP:
 	    r_unev = cdr (r_unev);
 	    CALL_EVAL (ev_if_decide);
 
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    
 	    if (r_val->istrue ())
 		{
@@ -612,7 +612,7 @@ TOP:
 	case ev_or:
 	    if (r_unev == nil || r_val->istrue ())
 		{
-		restore (r_cont);
+		restore_i(r_cont);
 		GOTO (r_cont);
 		}
 
@@ -624,7 +624,7 @@ TOP:
 	case ev_and:
 	    if (r_unev == nil || !r_val->istrue ())
 		{
-		restore (r_cont);
+		restore_i (r_cont);
 		GOTO (r_cont);
 		}
 
@@ -639,7 +639,7 @@ TOP:
 	    // eval, please.
 
 	    restore (r_env);
-	    restore (r_cont);
+	    restore_i (r_cont);
 	    r_exp = r_val;
 	    EVAL_DISPATCH ();
 
@@ -844,7 +844,7 @@ TOP:
 	    save (r_unev);
 	    save (r_env);
 	    r_unev = cddr (r_unev);
-	    save (ev_do_step);
+	    save_i (ev_do_step);
 	    GOTO (ev_sequence);
 
 	case ev_do_step:
@@ -962,13 +962,13 @@ TOP:
 
 	    if (t == Cell::Vec)
 		{
-		save (1);
+		save_i (1);
 		r_unev = vector_to_list (this, cons (r_unev, nil)); // yyy
 		}
 	    else
-		save (0);
+		save_i (0);
 
-	    save (ev_qq_finish);
+	    save_i (ev_qq_finish);
 	    r_val = nil;
 
 	case ev_qq0:
@@ -1001,7 +1001,7 @@ TOP:
 		    else if (p == s_quasiquote) // increase QQ level.
 			{
 			r_unev = cdr (r_unev);
-			save (ev_qq1);
+			save_i (ev_qq1);
 			GOTO (ev_quasiquote);
 		    case ev_qq1:
 			r_tmp = make_symbol (s_quasiquote);
@@ -1036,7 +1036,7 @@ TOP:
 
 			save (r_argl);
 			r_exp = r_unev;
-			save (ev_unq_spl2);
+			save_i (ev_unq_spl2);
 			GOTO (ev_qq0);
 			}
 		    else
@@ -1057,13 +1057,13 @@ TOP:
 		    {
 		QQCONS:	                        // "move quasiquotation inward"
 		    save (cdr (r_unev));	// cons (qq (car), qq (cdr))
-		    save (ev_qq2);            // new continuation
+		    save_i (ev_qq2);            // new continuation
 		    r_unev = r_exp;
 		    GOTO (ev_qq0);
 		case ev_qq2:
 		    restore (r_unev);
 		    save (r_val);
-		    save (ev_qq3);
+		    save_i (ev_qq3);
 		    GOTO (ev_qq0);
 		case ev_qq3:
 		    restore (r_exp);
@@ -1073,15 +1073,15 @@ TOP:
 	    else
 		r_val = r_unev;                 // atoms are self-evaluating
 
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    GOTO (r_cont);
 	    
 	case ev_qq_finish:                      // finished.  reconvert to 
-	    restore (flag);                   // vector form if necessary.
+	    restore_i(flag);                   // vector form if necessary.
 	    if (flag)
 		r_val = vector_from_list (this, r_val);
 	    --r_qq;
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    GOTO (r_cont);
 	    
         case ev_qq_decrease:
@@ -1092,7 +1092,7 @@ TOP:
 	  
 	    --r_qq;
 	    r_unev = cdr (r_unev);
-	    save (ev_qqd_1);
+	    save_i (ev_qqd_1);
 	    GOTO (ev_qq0);
 	case ev_qqd_1:
 	    restore (r_exp);                    // recover head symbol
@@ -1146,7 +1146,7 @@ TOP:
 
 	    save (r_unev);
 	    save (r_proc);
-	    save (ev_foreach2);
+	    save_i(ev_foreach2);
 	    GOTO (apply_dispatch2);
 	case ev_foreach2:
 	    restore (r_proc);
@@ -1173,7 +1173,7 @@ TOP:
 	    save (r_varl);
 	    save (r_unev);
 	    save (r_proc);
-	    save (ev_map2);
+	    save_i(ev_map2);
 	    GOTO (apply_dispatch2);
 	case ev_map2:
 	    restore (r_proc);
@@ -1199,7 +1199,7 @@ TOP:
 		clear (r_argl);
 		r_proc = r_exp->cd.cv->get (0);
 		save (r_exp);
-		save (ev_force2);
+		save_i(ev_force2);
 		GOTO (apply_dispatch2);
 	    case ev_force2:
 		// Now, it can happen that the procedure we're
@@ -1220,7 +1220,7 @@ TOP:
 
 		}
 
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    GOTO (r_cont);
 
 	case ev_withinput:
@@ -1229,24 +1229,24 @@ TOP:
 	    with_input (Cell::caar (&r_argl)->StringValue ());
 	    r_proc = Cell::cadar (&r_argl);
 	    clear (r_argl);
-	    save (ev_withinput2); // continuation
+	    save_i(ev_withinput2); // continuation
 	    GOTO (apply_dispatch2);
 
 	case ev_withinput2:
 	    without_input ();
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    GOTO (r_cont);
 
 	case ev_withoutput:
 	    with_output (Cell::caar (&r_argl)->StringValue ());
 	    r_proc = Cell::cadar (&r_argl);
 	    clear (r_argl);
-	    save (ev_withoutput2); // continuation
+	    save_i(ev_withoutput2); // continuation
 	    GOTO (apply_dispatch2);
 
 	case ev_withoutput2:
 	    without_output ();
-	    restore (r_cont);
+	    restore_i(r_cont);
 	    GOTO (r_cont);
 
 	case ev_load:
@@ -1274,7 +1274,7 @@ TOP:
 	    r_unev = make_oport (Cell::caar (&r_argl)->StringValue ());
 	    Cell::setcar (&r_argl, cons (r_unev, nil));
 	    save (r_unev);
-	    save (ev_callwof2); // cont
+	    save_i(ev_callwof2); // cont
 	    GOTO (apply_dispatch2);
 	    
 	case ev_callwof2:
