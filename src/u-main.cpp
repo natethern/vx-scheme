@@ -74,9 +74,9 @@ Cell * OS::undef (Context * ctx, const char * name)
     return 0;
     }
 
-void OS::exception() {
-  if (jmpbuf_set) longjmp (jb, 1);
-  fputs(errbuf, stderr);
+void OS::exception (const char * s) {
+  if (jmpbuf_set) longjmp (jb, reinterpret_cast <int> (s));
+  fputs(s, stderr);
   fputs("\n", stderr);
   exit(1);
 }
@@ -98,6 +98,7 @@ void interact (Context * ctx)
     }
 
 int main (int argc, char **argv) {
+  const char *jv;
   Context ctx;
   Cell* scheme_argv = ctx.gc_protect(ctx.make_vector(0));
   cellvector* argvec = scheme_argv->VectorValue();
@@ -125,11 +126,11 @@ int main (int argc, char **argv) {
     // Interact
 
     while (1) { 
-      if (setjmp (jb) == 0) { 
+      if ((jv = reinterpret_cast <const char *> (setjmp (jb))) == 0) { 
 	jmpbuf_set = true;
 	interact (&ctx);
       } else { 
-	fprintf (stderr, "caught: %s\n", OS::errbuf);
+	fprintf (stderr, "caught: %s\n", jv);
       }
     }
   }

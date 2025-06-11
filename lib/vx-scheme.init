@@ -47,8 +47,8 @@
                                         ;           ((MS-DOS) "C:\\SLIB\\")
                                         ;           (else "")))))
                                         ;     (lambda () library-path)))
-;(define (library-vicinity) "/usr/local/lib/slib/")
-(define (library-vicinity) "/usr/share/slib/")
+(define (library-vicinity) "/usr/local/lib/slib/")
+;(define (library-vicinity) "/usr/share/slib/")
 
 ;;; (home-vicinity) should return the vicinity of the user's HOME
 ;;; directory, the directory which typically contains files which

@@ -12,9 +12,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #ifndef WIN32
 #include <unistd.h>
 #else
@@ -59,16 +56,11 @@ class OS
     // supply value for undef symbol
     static Cell *       undef (Context *, const char *); 
     // report exception and restart
-    static void         exception(); 
+    static void         exception (const char *); 
     // manage debug flags
     static unsigned int flags ();      
     static bool         flag (int bit)
 	{ return (flags () & bit) != 0; } 
-
-    // XXX global error buffer, set just before a longjmp to the 
-    // REPL.  This should be made context local.
-    static const int ebufsize = 256;
-    static char errbuf [ebufsize];
     };
 
 typedef Cell * (* subr_f)      (Context * ctx, Cell * arglist);
@@ -308,6 +300,8 @@ class Cell
     
 public:
     
+    typedef Cell * ptr;
+    
     void display (FILE *);
     void write(FILE *) const;
     void write(sstring&) const;
@@ -421,39 +415,39 @@ public:
     // preallocate the string space; freeing this object discards
     // both box and string.
 
-    struct StringBox {
-      size_t length;
-      char s[1];
-    };
+    struct StringBox
+        {
+        size_t length;
+        char   s[1];
+        };
 
     // Value extractors
 
-    intptr_t IntValue() const;
-    char CharValue() const;
-    SubrBox* SubrValue() const;
-    char* StringValue() const;
-    size_t StringLength() const;                 
-    FILE* IportValue() const;
-    FILE* OportValue() const;
-    void* ContValue() const;
-    cellvector* VectorValue() const;
-    cellvector* CProcValue() const;
-    Cell* PromiseValue() const;
-    Cell* CPromiseValue() const;
-    psymbol SymbolValue() const;
-    psymbol BuiltinValue() const;
-    Procedure LambdaValue() const;
-    double RealValue() const;
-    const char* name() const;
+    int          IntValue ()     const;
+    char         CharValue ()    const;
+    SubrBox *    SubrValue ()    const;
+    char *       StringValue ()  const;
+    size_t       StringLength () const;                 
+    FILE *       IportValue ()   const;
+    FILE *       OportValue ()   const;
+    void *       ContValue ()    const;
+    cellvector * VectorValue ()  const;
+    cellvector * CProcValue ()   const;
+    Cell *       PromiseValue () const;
+    psymbol      SymbolValue ()  const;
+    psymbol      BuiltinValue () const;
+    Procedure    LambdaValue ()  const;
+    double       RealValue ()    const;
+    const char * name ()         const;
 
     // unsafe accessors: use when you have prior knowledge that the 
     // cell contains an atom of the proper type.
 
-    cellvector* unsafe_vector_value() const { 
+    cellvector * unsafe_vector_value() const { 
       return cd.cv;
     }
 
-    static void real_to_string (double, char *, int);
+    static void         real_to_string (double, char *, int);
 
     double asReal () const { 
       if (type () == Cell::Int)
@@ -595,10 +589,10 @@ public:
     private:
 
     static inline bool short_atom (const Cell * c)
-      { return (reinterpret_cast <uintptr_t> (c) & (ATOM|SHORT))
+      { return (reinterpret_cast <unsigned int> (c) & (ATOM|SHORT))
           == (ATOM|SHORT); }
     static inline bool long_atom (const Cell* c)
-      { return (reinterpret_cast <uintptr_t> (c) & (ATOM|SHORT)) == ATOM; }
+      { return (reinterpret_cast <unsigned int> (c) & (ATOM|SHORT)) == ATOM; }
     static inline bool atomic (const Cell * c)
       { return short_atom (c) || ((c->ca.i & (ATOM|SHORT)) == ATOM); }
 
@@ -625,23 +619,23 @@ public:
     // consists of two words, each at least 32 bits, with the 
     // natural alignment (8 bytes for a 32-bit machine).
 
-    static const uintptr_t TAGBITS = 3;
-    static const uintptr_t ATOM    = 0x1; 
-    static const uintptr_t MARK    = 0x2;
-    static const uintptr_t SHORT   = 0x4;
+    static const unsigned int TAGBITS = 3;
+    static const unsigned int ATOM    = 0x1; 
+    static const unsigned int MARK    = 0x2;
+    static const unsigned int SHORT   = 0x4;
 
-    static const uintptr_t TYPEBITS  = 5;
-    static const uintptr_t TYPEMASK  = (1 << TYPEBITS) - 1;
-    static const uintptr_t TAGMASK   = (1 << TAGBITS) - 1;
+    static const unsigned int    TYPEBITS  = 5;
+    static const unsigned int    TYPEMASK  = (1 << TYPEBITS) - 1;
+    static const unsigned int    TAGMASK   = (1 << TAGBITS) - 1;
     // Make sure flag bits are disjoint from TYPE and TAG bits.
-    static const uintptr_t FLAGBASE  = 1 << (TYPEBITS + TAGBITS);
-    static const uintptr_t FORCED    = FLAGBASE;
-    static const uintptr_t QUICK     = FLAGBASE << 1;
-    static const uintptr_t GLOBAL    = FLAGBASE << 2;
-    static const uintptr_t MACRO     = FLAGBASE << 3;
-    static const uintptr_t VREF      = FLAGBASE << 4;
-    static const uintptr_t FREE      = FLAGBASE << 5;
-    static const uintptr_t FLAGBITS  = 6;
+    static const unsigned int    FLAGBASE  = 1 << (TYPEBITS + TAGBITS);
+    static const unsigned int    FORCED    = FLAGBASE;
+    static const unsigned int    QUICK     = FLAGBASE << 1;
+    static const unsigned int    GLOBAL    = FLAGBASE << 2;
+    static const unsigned int    MACRO     = FLAGBASE << 3;
+    static const unsigned int    VREF      = FLAGBASE << 4;
+    static const unsigned int    FREE      = FLAGBASE << 5;
+    static const unsigned int    FLAGBITS  = 6;
 
     static const int GLOBAL_ENV = -1;
 
@@ -653,26 +647,26 @@ public:
 #error too many atom bits used
 #endif
 
-    inline intptr_t e_skip () {
+    inline int e_skip () {
       // If global symbol, return -1.  Else number of environments 
       // to skip is in highest-order byte
       return (ca.i & GLOBAL) ? GLOBAL_ENV
                              : (int)((ca.i >> (8*(sizeof(ca.i)-1))) & 0xff);
     }
 
-    inline intptr_t b_skip () { 
+    inline int b_skip () { 
       // If global symbol, number of bindings to skip is in upper 16
       // bits; else, it's in 2nd-highest-order byte
       return (ca.i & GLOBAL) ? (ca.i >> (8*(sizeof(ca.i)-2))  & 0xffff)
                              : ((ca.i >> (8*(sizeof(ca.i)-2))) & 0xff);
     }
 
-    void set_lexaddr (intptr_t e_skip, intptr_t b_skip) { 
+    void set_lexaddr (int e_skip, int b_skip) { 
       // If global, set flag and store b_skip in upper 16 bits.
       // Else set e_skip in upper 8 bits, and set b_skip in 
       // next 8 bits.
-      const intptr_t start_bit = 8*(sizeof(ca.i)-2);
-      const intptr_t two_bytes = (1 << 16) - 1;
+      const int start_bit = 8*(sizeof(ca.i)-2);
+      const int two_bytes = (1 << 16) - 1;
       ca.i &= ~(two_bytes << start_bit);
       if (e_skip == -1)
         ca.i |= (b_skip << start_bit) | GLOBAL | QUICK;
@@ -716,12 +710,12 @@ public:
 
     union _car
         {
-        uintptr_t	    i;
+        unsigned int        i;
         Cell *              p;
         }                   ca;
     union _cdr
         {
-        uintptr_t   	    i;
+        unsigned int        i;
         double *            d;
         Cell *              p;
         const char *        u;
@@ -877,7 +871,7 @@ class Context
     // Manufacture Cells and Atoms
 
     Cell * make ();
-    Cell * make_int (intptr_t i);
+    Cell * make_int (int i);
     Cell * make_char (char ch);
     Cell * make_real (double d);        
     Cell * make_string (size_t len);
@@ -958,6 +952,7 @@ class Context
 
     Cell*               RunMain();
 
+
     private:
 
     Cell *              alloc (Cell::Type t);
@@ -982,14 +977,14 @@ class Context
     void                save (Cell * c)      { m_stack.push (c);              }
     void                save (Cell & rc)     { m_stack.push (rc.ca.p);
                                                m_stack.push (rc.cd.p);        }
-    void                save_i (intptr_t i)
+    void                save (int i)
 	{ m_stack.push (reinterpret_cast <Cell *> ((i << 1) | Cell::ATOM)); }
     void                restore (Cell *& c)  { c = m_stack.pop ();            } 
     void                restore (Cell & rc)  { rc.cd.p = m_stack.pop ();
                                                rc.ca.p = m_stack.pop ();      }
-    void                restore_i (intptr_t & i)
-	{ i = (reinterpret_cast <intptr_t> (m_stack.pop ()) &
-               static_cast<intptr_t>(~Cell::ATOM)) >> 1; }
+    void                restore (int & i)
+	{ i = (reinterpret_cast <int> (m_stack.pop ()) &
+               static_cast<int>(~Cell::ATOM)) >> 1; }
 
     // ===========================
     // REGISTER MACHINE
@@ -1007,7 +1002,7 @@ class Context
     Cell *              r_nu;       // reference to objects being created
     int                 r_qq;       // quasiquotation depth
     cellvector          r_gcp;      // extra cells protected from GC
-    intptr_t            r_cont;     // current continuation
+    int                 r_cont;     // current continuation
     cellvector          m_stack;    // recursion/evaluation stack
     int                 state;      // current machine state
 

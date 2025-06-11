@@ -91,8 +91,6 @@ void Context::init_machine ()
     clear (r_varl);
     }
 
-char OS::errbuf [ebufsize];
-
 // Context::using_vm - return true if we are using the bytecode vm.
 
 bool Context::using_vm() const { 
@@ -112,22 +110,24 @@ Cell* Context::eval(Cell* form) {
 
 void error (const char * message, const char * m2 /* = 0 */)
     {
+    static const int ebufsize = 256;
+    static char errbuf [ebufsize];
     int ix = 0;
     const char *p;
     char *q;
 
     // Concatenate the two strings into a static buffer.
 
-    for (p = message, ix = 0, q = OS::errbuf; *p && ix < OS::ebufsize-1; ++ix)
+    for (p = message, ix = 0, q = errbuf; *p && ix < ebufsize-1; ++ix)
 	*q++ = *p++;
 
     if (m2)
-      for (p = m2; *p && ix < OS::ebufsize-1; ++ix)
+	for (p = m2; *p && ix < ebufsize-1; ++ix)
 	    *q++ = *p++;
 
     *q = '\0';
 
-    OS::exception();
+    OS::exception (errbuf);
     }
 
 Cell * Context::extend (Cell * env)

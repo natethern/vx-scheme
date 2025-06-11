@@ -18,7 +18,7 @@ Cell * Context::make ()
     return c;
     }
 
-Cell * Context::make_int (intptr_t i)
+Cell * Context::make_int (int i)
     {
     // SHORT INTEGER support: if the integer fits in 24 bits, 
     // then return a phony pointer with the short flag set and 
@@ -199,6 +199,9 @@ void Cell::sanity_check ()
     {
     int bad = 0;
 
+    printf ("size = %Zu, typebits = %d, typemask = %x, numtypes = %d\n",
+	    sizeof (Cell), TYPEBITS, TYPEMASK, NUM_TYPES);
+
     // Make sure that there are enough typebits to contain
     // all the types we know about.
 
@@ -330,10 +333,10 @@ void Cell::stats ()
 //
 //======================================================================
 
-intptr_t Cell::IntValue () const
+int Cell::IntValue () const
     {
     if (short_atom (this))
-        return reinterpret_cast <intptr_t> (this) >> 8;
+        return reinterpret_cast <int> (this) >> 8;
         
     typecheck (Int); return cd.i;
     }
@@ -387,15 +390,11 @@ cellvector * Cell::CProcValue () const
     typecheck(Cproc); return cd.cv;
     }
 
-Cell* Cell::PromiseValue () const {
-  typecheck (Promise);
-  return cd.cv->get (0);
-}
-
-Cell* Cell::CPromiseValue() const {
-  typecheck(Cpromise);
-  return cd.cv->get(0);
-}
+Cell * Cell::PromiseValue () const
+    {
+    typecheck (Promise);
+    return cd.cv->get (0);
+    }
 
 psymbol Cell::BuiltinValue () const
     {
@@ -421,10 +420,11 @@ const char * Cell::name () const
 
 void Cell::typefail (Type t1, Type t2) const
     {
-    sprintf (OS::errbuf, "type check failure: wanted %s, got %s",
+    static char buf [128]; // XXX not reentrant, and fixed buffer dangerous
+    sprintf (buf, "type check failure: wanted %s, got %s",
 	     typeName [t2], typeName [t1]); /* XXX sprintf into fixed buf */
     
-    OS::exception();
+    OS::exception (buf);
     }
 
 void Cell::dump (FILE * out)
@@ -437,13 +437,13 @@ void Cell::dump (FILE * out)
         if (ca.i & MARK) fputs ("mark ", out);
         if (short_atom (ca.p))
             {   
-            printf ("short %" PRIdPTR " ", ca.p->IntValue ());
+            printf ("short %d ", ca.p->IntValue ());
             }
         else 
             {
             if (ca.i & ATOM) 
                 {
-                printf ("atom %04" PRIxPTR " ", ca.i);
+                printf ("atom %04x ", ca.i);
                 if (ca.i & FORCED) fputs ("forced ", out);
                 if (ca.i & QUICK)  fputs ("quick ", out);
                 if (ca.i & MACRO)  fputs ("macro ", out);
@@ -467,7 +467,7 @@ void Cell::dump (FILE * out)
                         fprintf (out, "%p", cd.p);
                     break;
 
-                case Int:    fprintf (out, " %" PRIdPTR, cd.i); break;
+                case Int:    fprintf (out, " %d", cd.i); break;
                 case Real:   fprintf (out, " %g", RealValue ()); break;
                 case Unique: fprintf (out, " %s", cd.u); break;
                 case Symbol: fprintf (out, " %s", SymbolValue ()->key);
@@ -672,13 +672,13 @@ class Slab
 	// Supposedly the ANSI library guarantees that storage
 	// is 4-aligned!
 
-	if ((reinterpret_cast<intptr_t>(storage)) & 3)
+	if (((int) storage) & 3)
 	    abort ();
 
 	// But if it's not 8-aligned we can fix that using the 
 	// extra 4 bytes we allocated.
 
-	if ((reinterpret_cast<intptr_t>(storage)) & 7)
+	if (((int) storage) & 7)
 	    start = reinterpret_cast <Cell *> (storage + 4);
 	else
 	    start = reinterpret_cast <Cell *> (storage);
@@ -779,12 +779,11 @@ TOP:
 //
 
 
-inline Cell * Cell::untagged (Cell * c) {
-  static const uintptr_t not_tagmask = ~Cell::TAGMASK;
-
-  return reinterpret_cast <Cell *>
-    (reinterpret_cast <uintptr_t> (c) & not_tagmask);
-}
+inline Cell * Cell::untagged (Cell * c)
+    {
+    return reinterpret_cast <Cell *>
+	  (reinterpret_cast <int> (c) & ~Cell::TAGMASK);
+    }
 
 inline void Cell::gc_set_car (Cell * src)
     {
@@ -964,7 +963,7 @@ E6: if (T == nil)
 	    // can contain integer VM codes as well as cell pointers.
 	    // These latter are marked with the ATOM flag.
 
-	    if (reinterpret_cast <intptr_t> (P) & Cell::ATOM)
+	    if (reinterpret_cast <int> (P) & Cell::ATOM)
 		goto next_element;
 	    
 	    // Otherwise we mark, if not marked already.
@@ -1142,7 +1141,7 @@ void Context::gc ()
     // marked with the ATOM flag.
 
     for (int ix = 0; ix < m_stack.size (); ++ix)
-	if ((reinterpret_cast <intptr_t> ((p = m_stack [ix])) & Cell::ATOM) == 0)
+	if ((reinterpret_cast <int> ((p = m_stack [ix])) & Cell::ATOM) == 0)
 	    mark (p);
 
     // Mark the I/O ports referenced in this environment stack.

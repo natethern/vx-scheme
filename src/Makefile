@@ -11,10 +11,11 @@ VM_COMP_OBJ     = $(VM_OBJ) _compiler.o
 UNIX_OBJ        = u-main.o
 PROGRAM		= vx-scheme
 DEFVER          = -DVERSION=$(VERSION)
-CFLAGS		= -ansi -g -O2 -fno-exceptions -fno-rtti -Wall $(DEFVER)
+CFLAGS		= -ansi -g -O2 -fno-exceptions -fno-rtti -fpermissive -Wall $(DEFVER)
 CC		= gcc	
 TC              = ../testcases
 
+SLIB = /usr/local/lib/slib
 
 all:		vxs-interp vx-scheme
 
@@ -37,7 +38,7 @@ scheme-compiler: $(VM_COMP_OBJ) $(UNIX_OBJ) compile-file.scm vx-scheme
 		./vx-scheme ./compile-file.scm < compile-file.scm \
 		  > _compile-file.cpp
 		$(CC) $(CFLAGS) -c _compile-file.cpp
-		$(CC) $(CFLAGS) -o $@ $(VM_COMP_OBJ) $(UNIX_OBJ) \
+		$(CC) -o $@ $(VM_COMP_OBJ) $(UNIX_OBJ) \
 		  _compile-file.o -lstdc++ -lm 
 
 # Precompiled objects!  Run the scheme-compiler to produce bytecode in
@@ -92,14 +93,14 @@ TESTARENA = 	SLABSIZE=1000000
 
 test-interp:	vxs-interp
 		@echo '========== TESTING INTERPRETER =========='
-		@if [ -d /usr/share/slib ]; then \
+		@if [ -d $(SLIB) ]; then \
 		    (cd ../lib; ../src/vxs-interp < vx-slib-test.scm); \
 		fi
 		@(cd ../testcases; $(TESTARENA) ../src/vxs-interp < vx-test.scm)
 
 test-compile:	vx-scheme
 		@echo '========== TESTING COMPILER =========='
-		@if [ -d /usr/share/slib ]; then \
+		@if [ -d $(SLIB) ]; then \
 		    (cd ../lib; ../src/vx-scheme < vx-slib-test.scm); \
 		fi
 		@(cd ../testcases; $(TESTARENA) ../src/vx-scheme < vx-test.scm)

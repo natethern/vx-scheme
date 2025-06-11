@@ -233,7 +233,7 @@ TOP:
 	    // hex constant.  Drop the 'x' and convert with strtoul.
 
 	    char * endptr;
-	    uintptr_t ul = strtoul (lexeme.str () + 1, &endptr, 16);
+	    unsigned long ul = strtoul (lexeme.str () + 1, &endptr, 16);
 	    
 	    if (*endptr == '\0')
 		READ_RETURN (make_int (ul));
@@ -254,7 +254,7 @@ TOP:
 	    error ("indecipherable #o constant");
 	    }
 
-        error ("indecipherable #constant:", lexeme.str());
+        error ("indecipherable #constant");
 	}
     else if (c == '"')
 	{
@@ -425,7 +425,7 @@ void Cell::write (sstring& ss) const {
     switch(t) { 
       case Int: { 
         char buf[40];
-        sprintf(buf, "%" PRIdPTR, IntValue());
+        sprintf(buf, "%d", IntValue());
         ss.append(buf);
         break;
       }
@@ -535,10 +535,9 @@ void Cell::write (sstring& ss) const {
         ss.append("#<compiled-procedure>");
         break;
       case Cpromise:
-        if (flag(FORCED))
-	  CPromiseValue()->write(ss);
-	else
-	  ss.append("#<compiled-promise>");
+        ss.append(flag(FORCED)
+                  ? "#<forced-compiled-promise>"
+                  : "#<compiled-promise>");
         break;
       case Insn:
         ss.append("#<vm-instruction>");
@@ -584,7 +583,7 @@ bool Context::read_eval_print
         fflush (out);
     }
 
-    while ((expr = read (sio)))
+    while (expr = read (sio))
 	{
 	// Don't bother printing the unspecified value as result.
 

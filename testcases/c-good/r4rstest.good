@@ -744,7 +744,7 @@ SECTION(6 9)
 (delay (3 3))  ==> (3 3)
 (delay 2)  ==> 2
 (#<subr force> #<compiled-promise>)  ==> 6
-(#<subr force> 6)  ==> 6
+(#<subr force> #<forced-compiled-promise>)  ==> 6
 (force 3)  ==> 3
 
 errors were:

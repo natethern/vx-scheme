@@ -52,7 +52,8 @@
 	     (display (cdr result))
 	     (display " ")
 	     (set! total-time (+ total-time (cdr result))))
-	   (display "FAIL: "))
+	   (else
+	    (display "FAIL: ")))
        (display testcase)
        (newline)))
    testcases)

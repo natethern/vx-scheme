@@ -87,7 +87,7 @@
 	       (rest lst))
       (if (null? rest)
 	  result
-	  (loop (append result (list (func (car rest)))) (cdr rest)))))
+	  (loop (nconc result (list (func (car rest)))) (cdr rest)))))
 
   (define (_map2 func lst1 lst2)
     (let loop ((result '())

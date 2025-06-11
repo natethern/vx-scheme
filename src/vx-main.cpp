@@ -173,7 +173,7 @@ Cell * vx_invoke (Context * ctx, Cell * arglist)
 
 void OS::exception (const char * s)
     {
-    longjmp (jb, 1);
+    longjmp (jb, reinterpret_cast <int> (s));
     }
 
 void interact (Context * ctx)
@@ -191,6 +191,7 @@ void interact (Context * ctx)
 
 extern "C" int scheme (char * a0)
     {
+    const char *    jv;
     Context         ctx;
 
     // Sanity check: we need to make sure that the "unique cells"
@@ -202,7 +203,7 @@ extern "C" int scheme (char * a0)
     // worked out ok.  The garbage collector will be very unhappy if
     // any cells are not 8-aligned.
 
-    if ((reinterpret_cast<intptr_t>(nil)) & 7)
+    if (((int) nil) & 7)
 	{
 	printf ("code module error: standard cells not 8-aligned\n");
 	exit (1);
@@ -227,10 +228,10 @@ extern "C" int scheme (char * a0)
 	}
     else while (1)
 	{
-	if (setjmp (jb) == 0)
+	if ((jv = reinterpret_cast <const char *> (setjmp (jb))) == 0)
 	    interact (&ctx);
 	else
-	    fprintf (stderr, "caught: %s\n", OS::errbuf);
+	    fprintf (stderr, "caught: %s\n", jv);
 	}
     }
 

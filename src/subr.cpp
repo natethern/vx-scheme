@@ -51,7 +51,7 @@ static bool exact_list (Cell * arglist)
 	    {
 	    case Cell::Int:   continue;
             case Cell::Real:  return false;
-	    default:          return false;
+	    default:          error ("non-numeric type encountered");
 	    }
 
     return true;
@@ -78,7 +78,7 @@ Cell * skplus (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	intptr_t result = 0;
+	int result = 0;
 
 	FOR_EACH (p, arglist)
 	    result += car (p)->IntValue ();
@@ -100,7 +100,7 @@ Cell * skminus (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	intptr_t result = car (arglist)->IntValue ();
+	int result = car (arglist)->IntValue ();
 	arglist = cdr (arglist);
 
 	if (arglist == nil)
@@ -154,7 +154,7 @@ Cell * times (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	intptr_t result = 1;
+	int result = 1;
 
 	FOR_EACH (p, arglist)
 	    result *= Cell::car (p)->IntValue ();
@@ -176,8 +176,8 @@ Cell * skmax (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	intptr_t    m = numeric_limits<intptr_t>::min();
-	intptr_t    z;
+	int         m = INT_MIN;
+	int         z;
 
 	FOR_EACH (a, arglist)
 	    if ((z = Cell::car (a)->IntValue ()) > m)
@@ -202,8 +202,8 @@ Cell * skmin (Context * ctx, Cell * arglist)
     {
     if (exact_list (arglist))
 	{
-	intptr_t m = numeric_limits<intptr_t>::max();
-	intptr_t z;
+	int         m = INT_MAX;
+	int         z;
 
 	FOR_EACH (a, arglist)
 	    if ((z = car (a)->IntValue ()) < m)
@@ -323,8 +323,8 @@ BINOP (char_gt_ci,   chrGTci, char,   Char)
 	    if (cdr (a) != nil)                         	\
                 if (exact)                               	\
 	            { 		 			 	\
-                    intptr_t ia = car (a)->IntValue ();       	\
-                    intptr_t ib = cadr (a)->IntValue ();      	\
+                    int ia = car (a)->IntValue ();       	\
+                    int ib = cadr (a)->IntValue ();      	\
 	            if (! OP (ia, ib))			 	\
 			return &Cell::Bool_F;                   \
                     }                                           \
@@ -435,7 +435,7 @@ Cell * write_char (Context * ctx, Cell * arglist)
 
 Cell * skmake_vector (Context * ctx, Cell * arglist)
     {
-    intptr_t n = car (arglist)->IntValue ();
+    int n = car (arglist)->IntValue ();
 
     if (cdr (arglist) != nil)
 	return ctx->make_vector (n, cadr (arglist));
@@ -933,7 +933,7 @@ Cell* nconc(Context* ctx, Cell* arglist) {
 
   if (arglist == nil) return nil;
 
-  while (cdr(arglist) != nil) {
+  while(cdr(arglist) != nil) {
     Cell* list_head = car(arglist);
     if (list_head != nil) {
       Cell* list_tail = list_head;
@@ -1183,7 +1183,7 @@ Cell * set_cdr (Context * ctx, Cell * arglist)
     return unspecified;
     }
 
-Cell* set_car(Context * ctx, Cell * arglist)
+Cell * set_car (Context * ctx, Cell * arglist)
     {
     Cell::setcar (car (arglist), cadr (arglist));
     return unspecified;
@@ -1218,7 +1218,7 @@ Cell * integer_to_char (Context * ctx, Cell * arglist)
 
 Cell * char_to_integer (Context * ctx, Cell * arglist)
     {
-    return ctx->make_int (static_cast<intptr_t>(car (arglist)->CharValue ()));
+    return ctx->make_int ((int) car (arglist)->CharValue ());
     }
 
 Cell * open_input_file (Context * ctx, Cell * arglist)
@@ -1290,7 +1290,7 @@ Cell * inexact_to_exact (Context * ctx, Cell * arglist)
     if (a->type () == Cell::Int)
 	return ctx->make_int (a->IntValue ());
     else
-	return ctx->make_int (static_cast<intptr_t>(a->RealValue ()));
+	return ctx->make_int ((int) a->RealValue ());
     }
 
 // Round to nearest int... which would be easy except that the Scheme
@@ -1570,19 +1570,21 @@ static Cell* put_property (Context * ctx, Cell * arglist)
     return unspecified;
     }
 
-static Cell* get_property (Context * ctx, Cell * arglist) {
-  psymbol const p = car (arglist)->SymbolValue ();
-  psymbol const q = cadr (arglist)->SymbolValue ();
+static Cell* get_property (Context * ctx, Cell * arglist) 
+    {
+    psymbol p = car (arglist)->SymbolValue ();
+    psymbol q = cadr (arglist)->SymbolValue ();
 
-  if (p->plist)
-    for (int ix = 0; ix < p->plist->size (); ++ix) {
-      Cell * elt = p->plist->get (ix);
-      if (car (elt)->SymbolValue () == q)
-	return cdr (elt);
+    if (p->plist)
+	for (int ix = 0; ix < p->plist->size (); ++ix) 
+	    {
+	    Cell * elt = p->plist->get (ix);
+	    if (car (elt)->SymbolValue () == q)
+		return cdr (elt);
+	    }
+
+    return ctx->make_boolean (false);
     }
-
-  return ctx->make_boolean (false);
-}
 
 // Imported from Common Lisp.  Returns #t if the given symbol is 
 // bound in the global environment (lexical bindings are not consulted), 
@@ -1866,10 +1868,11 @@ void Context::provision ()
     SchemeExtension::RunInstall (this, envt);
     }
 
-void Context::bind_subr (const char * name, subr_f subr) {
-  psymbol s = intern (name);
-  set_var (envt, s, make_subr (subr, name));
-}
+void Context::bind_subr (const char * name, subr_f subr)
+    {
+    psymbol s = intern (name);
+    set_var (envt, s, make_subr (subr, name));
+    }
 
 cellvector* SchemeExtension::extensions = 0;
 SchemeExtension* SchemeExtension::main = 0;
